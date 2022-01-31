@@ -3,5 +3,5 @@ name: prod-env
 version: 0.0.1
 description: Production Environment
 maintainers:
-- name: Viktor Farcic
-  email: viktor@farcic.com
+- name: Sang Nguyen
+  email: sangnn@vng.com.vn
