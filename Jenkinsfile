@@ -17,11 +17,11 @@ pipeline {
     cmAddr = "cm.61.28.237.12.nip.io"
   }
   stages {
+    input "stop"
     stage("deploy") {
       when {
         branch "master"
       }
-      input "stop"
       steps {
         container("helm") {
           sh "helm repo add chartmuseum http://${cmAddr}"
