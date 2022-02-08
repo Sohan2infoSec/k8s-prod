@@ -27,7 +27,6 @@ pipeline {
           sh "helm repo add stable https://charts.helm.sh/stable"
           sh "helm repo update"
           sh "helm dependency update helm"
-          sh "sleep 3000"
           sh "helm --debug upgrade -i helm helm/ --namespace prod"
         }
       }
