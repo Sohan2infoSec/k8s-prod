@@ -7,65 +7,43 @@ pipeline {
   }
   agent {
     kubernetes {
-      cloud "go-demo-5-build"
-      label "go-demo-5-build"
+      cloud "kubernetes"
+      label "prod"
       serviceAccount "build"
       yamlFile "KubernetesPod.yaml"
     }      
   }
   environment {
-    image = "nhatsangvn/go-demo-5"
-    project = "go-demo-5"
-    domain = "61.28.237.12.nip.io"
     cmAddr = "cm.61.28.237.12.nip.io"
   }
   stages {
-    stage("build") {
+    stage("deploy") {
+      when {
+        branch "master"
+      }
       steps {
-        container("golang") {
-          script {
-            currentBuild.displayName = new SimpleDateFormat("yy.MM.dd").format(new Date()) + "-${env.BUILD_NUMBER}"
-          }
-          k8sBuildGolang("go-demo")
-        }
-        container("docker") {
-          k8sBuildImageBeta(image, false)
+        container("helm") {
+          sh "helm repo add chartmuseum http://${cmAddr}"
+          sh "helm repo update"
+          sh "helm dependency update helm"
+          sh "helm upgrade -i helm helm/ --namespace prod --force"
         }
       }
     }
-    stage("func-test") {
+    stage("test") {
+      when {
+        branch "master"
+      }
       steps {
-        container("helm") {
-          k8sUpgradeBeta(project, domain, "--set replicaCount=2 --set dbReplicaCount=1")
-        }
-        container("kubectl") {
-          k8sRolloutBeta(project)
-        }
-        container("golang") {
-          k8sFuncTestGolang(project, domain)
-        }
+        echo "Testing..."
       }
       post {
-        always {
+        failure {
           container("helm") {
-            k8sDeleteBeta(project)
+            sh "helm rollback helm 0"
           }
-        }
-      }
-    }
-    stage("release") {
-      when {
-          branch "master"
-      }
-      steps {
-        container("docker") {
-          k8sPushImage(image, false)
-        }
-        container("helm") {
-          k8sPushHelm(project, "", cmAddr, true, true)
         }
       }
     }
   }
 }
-
