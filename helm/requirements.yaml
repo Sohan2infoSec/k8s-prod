@@ -7,4 +7,4 @@ dependencies:
   version: 2.5.4
 - name: go-demo-5
   repository: "@chartmuseum"
-  version: 0.0.1
+  version: 0.0.2

@@ -24,6 +24,7 @@ pipeline {
       steps {
         container("helm") {
           sh "helm repo add chartmuseum http://${cmAddr}"
+          sh "helm repo add stable https://charts.helm.sh/stable"
           sh "helm repo update"
           sh "helm dependency update helm"
           sh "helm upgrade -i helm helm/ --namespace prod --force"
