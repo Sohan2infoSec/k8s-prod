@@ -37,7 +37,7 @@ pipeline {
       }
       steps {
         echo "Testing..."
-        sendTelegram("Testing..." + currentBuild.displayName)
+        sendTelegram("Testing..." + env.JOB_NAME + currentBuild.displayName)
       }
       post {
         failure {
