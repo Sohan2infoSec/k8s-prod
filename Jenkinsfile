@@ -7,43 +7,65 @@ pipeline {
   }
   agent {
     kubernetes {
-      cloud "kubernetes"
-      label "prod"
+      cloud "go-demo-5-build"
+      label "go-demo-5-build"
       serviceAccount "build"
       yamlFile "KubernetesPod.yaml"
     }      
   }
   environment {
-    cmAddr = "cm.34.210.146.155.nip.io"
+    image = "nhatsangvn/go-demo-5"
+    project = "go-demo-5"
+    domain = "61.28.237.12.nip.io"
+    cmAddr = "cm.61.28.237.12.nip.io"
   }
   stages {
-    stage("deploy") {
-      when {
-        branch "master"
-      }
+    stage("build") {
       steps {
-        container("helm") {
-          sh "helm repo add chartmuseum http://${cmAddr}"
-          sh "helm repo update"
-          sh "helm dependency update helm"
-          sh "helm upgrade -i prod helm --namespace prod --force"
+        container("golang") {
+          script {
+            currentBuild.displayName = new SimpleDateFormat("yy.MM.dd").format(new Date()) + "-${env.BUILD_NUMBER}"
+          }
+          k8sBuildGolang("go-demo")
+        }
+        container("docker") {
+          k8sBuildImageBeta(image, false)
         }
       }
     }
-    stage("test") {
-      when {
-        branch "master"
-      }
+    stage("func-test") {
       steps {
-        echo "Testing..."
+        container("helm") {
+          k8sUpgradeBeta(project, domain, "--set replicaCount=2 --set dbReplicaCount=1")
+        }
+        container("kubectl") {
+          k8sRolloutBeta(project)
+        }
+        container("golang") {
+          k8sFuncTestGolang(project, domain)
+        }
       }
       post {
-        failure {
+        always {
           container("helm") {
-            sh "helm rollback prod 0"
+            k8sDeleteBeta(project)
           }
+        }
+      }
+    }
+    stage("release") {
+      when {
+          branch "master"
+      }
+      steps {
+        container("docker") {
+          k8sPushImage(image, false)
+        }
+        container("helm") {
+          k8sPushHelm(project, "", cmAddr, true, true)
         }
       }
     }
   }
 }
+
