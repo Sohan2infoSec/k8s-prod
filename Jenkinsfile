@@ -17,7 +17,6 @@ pipeline {
     cmAddr = "cm.61.28.237.12.nip.io"
   }
   stages {
-    input "stop"
     stage("deploy") {
       when {
         branch "master"
@@ -28,6 +27,7 @@ pipeline {
           sh "helm repo add stable https://charts.helm.sh/stable"
           sh "helm repo update"
           sh "helm dependency update helm"
+          sh "sleep 3000"
           sh "helm --debug upgrade -i helm helm/ --namespace prod"
         }
       }
