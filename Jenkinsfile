@@ -21,6 +21,7 @@ pipeline {
       when {
         branch "master"
       }
+      input "stop"
       steps {
         container("helm") {
           sh "helm repo add chartmuseum http://${cmAddr}"
